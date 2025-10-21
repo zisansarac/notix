@@ -50,3 +50,40 @@ exports.registerUser= async (req, res) => {
         res.status(500).json({ message: 'Sunucu hatası. Kayıt işlemi başarısız. Lütfen daha sonra tekrar deneyin.' });
     }
 };
+
+// @desc    Kullanıcı girişi (Login)
+// @route   POST /api/auth/login
+// @access  Public
+
+exports.loginUser = async (req, res) => {
+    const { email, password } = req.body;
+
+    // 1. Gerekli alanların doldurulduğunu kontrol et
+    if(!email || !password) {
+        return res.status(400).json({ message: 'Email ve şifre zorunludur.' });
+    }
+
+    try {
+        // 2. Kullanıcıyı e-posta ile veritabanında ara
+        const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        const user = userResult.rows[0];
+
+        // 3. Kullanıcı yoksa veya şifre eşleşmiyorsa hata döndür.
+        if(user && (await bcrypt.compare(password, user.password))) {
+            // 4. Başarılı giriş yanıtı gönder ve JWT token oluştur
+            res.status(200).json({
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                token: generateToken(user.id) // Yeni JWT Token oluştur
+            });
+        } else {
+            // Kimlik doğrulama başarısız
+            res.status(401).json({ message: 'Geçersiz email veya şifre.' });
+        }
+    } catch(error) {
+        console.error('Giriş hatası:', error.message);
+        res.status(500).json({ message: 'Sunucu hatası. Giriş işlemi başarısız. Lütfen daha sonra tekrar deneyin.' });
+    }
+ 
+};
