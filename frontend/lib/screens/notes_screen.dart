@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/providers/theme_provider.dart';
 import 'package:frontend/services/api_service.dart';
 import '../models/note_model.dart';
 import '../providers/auth_provider.dart';
@@ -12,11 +13,32 @@ class NotesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notesState = ref.watch(noteProvider);
+    final themeMode = ref.watch(themeProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notix Notlarım'),
         actions: [
+          IconButton(
+            icon: Icon(
+              themeMode.name == 'light' || themeMode.name == 'system'
+                  ? Icons.dark_mode_outlined
+                  : Icons.light_mode_outlined,
+            ),
+            onPressed: () {
+              final currentTheme = ref.read(themeProvider);
+              final notifier = ref.read(themeProvider.notifier);
+
+              // Basit bir toggle mantığı: light -> dark -> system
+              if (currentTheme == ThemeMode.light) {
+                notifier.setDark();
+              } else if (currentTheme == ThemeMode.dark) {
+                notifier.setSystem();
+              } else {
+                notifier.setLight();
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
@@ -26,7 +48,6 @@ class NotesScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.security),
             onPressed: () async {
-              // API servisimize erişim
               final apiService = ref.read(apiServiceProvide);
 
               ScaffoldMessenger.of(context).showSnackBar(

@@ -2,38 +2,66 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 
-// Ekranın durumunu (Giriş mi, Kayıt mı?) yöneten bir StateProvider
-final isLoginProvider = StateProvider<bool>(
-  (ref) => true,
-); // Başlangıçta Giriş (Login)
+final isLoginProvider = StateProvider<bool>((ref) => true);
 
 class AuthScreen extends ConsumerWidget {
   const AuthScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Giriş/Kayıt durumunu izle
     final isLogin = ref.watch(isLoginProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isLogin ? 'Giriş Yap' : 'Kayıt Ol'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: isLogin
-              ? const AuthForm(isLogin: true)
-              : const AuthForm(isLogin: false),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).primaryColor.withOpacity(0.8),
+              Theme.of(context).primaryColor,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(30.0),
+            child: Card(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              elevation: 10,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Uygulama logosu/başlığı
+                    Text(
+                      isLogin ? 'Hoş Geldiniz!' : 'Yeni Hesap Oluştur',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    isLogin
+                        ? const AuthForm(isLogin: true)
+                        : const AuthForm(isLogin: false),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-// --- Auth Formu Widget'ı ---
 class AuthForm extends ConsumerStatefulWidget {
   final bool isLogin;
   const AuthForm({super.key, required this.isLogin});
@@ -50,14 +78,12 @@ class _AuthFormState extends ConsumerState<AuthForm> {
   bool _isLoading = false;
   String? _errorMessage;
 
-  // Form gönderildiğinde çalışacak metot
   void _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
     _formKey.currentState!.save();
 
-    // Yükleniyor durumunu ve hata mesajını sıfırla
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -65,23 +91,17 @@ class _AuthFormState extends ConsumerState<AuthForm> {
 
     try {
       if (widget.isLogin) {
-        // Giriş yapma işlemi
         await ref.read(authProvider.notifier).login(_email, _password);
       } else {
-        // Kayıt olma işlemi
         await ref
             .read(authProvider.notifier)
             .register(_name, _email, _password);
       }
-
-      // Başarılı olursa, main.dart yönlendirmeyi otomatik yapacaktır.
     } catch (e) {
-      // AuthNotifier'dan fırlatılan hatayı yakala
       setState(() {
         _errorMessage = e.toString();
       });
     } finally {
-      // İşlem bitince loading'i kapat
       setState(() {
         _isLoading = false;
       });
@@ -95,7 +115,6 @@ class _AuthFormState extends ConsumerState<AuthForm> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Kayıt formu için Name alanı
           if (!widget.isLogin)
             TextFormField(
               decoration: const InputDecoration(labelText: 'Adınız'),
@@ -105,7 +124,6 @@ class _AuthFormState extends ConsumerState<AuthForm> {
               onSaved: (val) => _name = val!,
             ),
 
-          // Email alanı
           TextFormField(
             decoration: const InputDecoration(labelText: 'E-posta'),
             keyboardType: TextInputType.emailAddress,
@@ -115,7 +133,6 @@ class _AuthFormState extends ConsumerState<AuthForm> {
             onSaved: (val) => _email = val!,
           ),
 
-          // Şifre alanı
           TextFormField(
             decoration: const InputDecoration(labelText: 'Şifre'),
             obscureText: true,
@@ -127,7 +144,6 @@ class _AuthFormState extends ConsumerState<AuthForm> {
 
           const SizedBox(height: 20),
 
-          // Hata mesajı gösterimi
           if (_errorMessage != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -138,7 +154,6 @@ class _AuthFormState extends ConsumerState<AuthForm> {
               ),
             ),
 
-          // Gönderme Butonu
           if (_isLoading)
             const CircularProgressIndicator()
           else
@@ -149,10 +164,8 @@ class _AuthFormState extends ConsumerState<AuthForm> {
 
           const SizedBox(height: 10),
 
-          // Giriş/Kayıt geçiş butonu
           TextButton(
             onPressed: () {
-              // Diğer duruma geçmek için StateProvider'ı güncelle
               ref.read(isLoginProvider.notifier).state = !widget.isLogin;
             },
             child: Text(

@@ -18,13 +18,10 @@ class NoteNotifier extends StateNotifier<AsyncValue<List<NoteModel>>> {
     : _apiService = _ref.watch(apiServiceProvide),
       super(const AsyncValue.data([])) {
     _ref.listen<UserModel?>(authProvider, (previous, next) {
-      // Önceki durum null'dı ve yeni durum null değilse (Giriş yapıldıysa)
       if (previous == null && next != null) {
         fetchNotes();
-      }
-      // Önceki durum null değildi ve yeni durum null ise (Çıkış yapıldıysa)
-      else if (previous != null && next == null) {
-        state = const AsyncValue.data([]); // Notları temizle
+      } else if (previous != null && next == null) {
+        state = const AsyncValue.data([]);
       }
     });
 
