@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/services/api_service.dart';
 import '../models/note_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/note_provider.dart';
@@ -19,6 +21,42 @@ class NotesScreen extends ConsumerWidget {
             icon: const Icon(Icons.logout),
             onPressed: () {
               ref.read(authProvider.notifier).logout();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.security),
+            onPressed: () async {
+              // API servisimize erişim
+              final apiService = ref.read(apiServiceProvide);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Token Testi Yapılıyor...')),
+              );
+
+              try {
+                // /me rotasına istek at
+                final response = await apiService.dio.get('/auth/me');
+
+                // Başarılı olursa (200), token doğru ulaşıyor demektir.
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '✅ Token Başarılı! Kullanıcı: ${response.data['user']['email']}',
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } on DioException catch (e) {
+                // Başarısız olursa (401), token ulaşmıyor/geçersiz demektir.
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '❌ Token Başarısız! Hata: ${e.response?.data['message'] ?? e.message}',
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
           ),
         ],

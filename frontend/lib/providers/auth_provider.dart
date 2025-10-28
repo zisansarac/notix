@@ -26,6 +26,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: 'loading@auth.com',
         token: token,
       );
+    } else {
+      state = null;
     }
   }
 

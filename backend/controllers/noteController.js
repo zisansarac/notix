@@ -5,10 +5,15 @@ const { pool } = require('../config/db');
 // @access  Private (Koruma altında)
 exports.getNotes = async (req, res) => {
     try { // req.user, authMiddleware tarafından eklenir.
+        const userId = parseInt(req.user.id, 10);
+        console.log(`DEBUG: Notlar aranıyor - Kullanıcı ID: ${userId}, Tipi: ${typeof userId}`);
+
         const result= await pool.query(
             'SELECT id, title, content, is_completed, created_at FROM notes WHERE user_id = $1 ORDER BY created_at DESC', 
-            [req.user.id]
+            [userId]
         );
+        console.log(`DEBUG: Kullanıcı ${req.user.id} için ${result.rows.length} not bulundu.`);
+
         res.status(200).json(result.rows);
     } catch (error) {
         console.error('Notları Getirme Hatası:', error.message);
@@ -26,10 +31,12 @@ exports.createNote = async (req, res) => {
         return res.status(400).json({ message: 'Başlık ve içerik gereklidir.' });
     }
 
+    const userId = parseInt(req.user.id, 10);
+
     try {
         const result = await pool.query(
             'INSERT INTO notes (user_id, title, content) VALUES ($1, $2, $3) RETURNING *',
-            [req.user.id, title, content]
+            [userId, title, content]
         );
         //Oluşturulan notu döndür
         res.status(201).json(result.rows[0]);
@@ -44,9 +51,13 @@ exports.createNote = async (req, res) => {
 // @access  Private (Koruma altında)
 exports.updateNote = async (req, res) => {
     const { id } = req.params;
-    const { title, content, is_completed } = req.body;
+    const { title, content, isCompleted } = req.body;
 
     try {
+
+        const userId = parseInt(req.user.id, 10);
+        const noteId = parseInt(id, 10);
+
         // 1. Notun kullanıcıya ait olup olmadığını kontrol et
         const noteCheck = await pool.query(
             'SELECT user_id FROM notes WHERE id = $1', [id]);
@@ -62,8 +73,8 @@ exports.updateNote = async (req, res) => {
 
         // 2. Güncelleme işlemi
         const result = await pool.query(
-            'UPDATE notes SET title = $1, content = $2, is_completed = $3 WHERE id = $4 RETURNING *',
-            [title || noteCheck.rows[0].title, content || noteCheck.rows[0].content, is_completed, id]
+            'UPDATE notes SET title = $1, content = $2, is_completed = $3 WHERE id = $4 AND user_id = $5 RETURNING *',
+            [title || noteCheck.rows[0].title, content || noteCheck.rows[0].content, isCompleted, noteId, userId]
         );
         res.status(200).json(result.rows[0]);
     } catch (error) {

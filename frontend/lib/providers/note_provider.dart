@@ -7,26 +7,35 @@ import 'auth_provider.dart';
 
 final noteProvider =
     StateNotifierProvider<NoteNotifier, AsyncValue<List<NoteModel>>>((ref) {
-      final apiService = ref.watch(apiServiceProvide);
-      final authState = ref.watch(authProvider);
-      return NoteNotifier(apiService, authState);
+      return NoteNotifier(ref);
     });
 
 class NoteNotifier extends StateNotifier<AsyncValue<List<NoteModel>>> {
+  final Ref _ref;
   final ApiService _apiService;
-  final UserModel? _currentUser;
 
-  NoteNotifier(this._apiService, this._currentUser)
-    : super(const AsyncValue.loading()) {
-    if (_currentUser != null) {
+  NoteNotifier(this._ref)
+    : _apiService = _ref.watch(apiServiceProvide),
+      super(const AsyncValue.data([])) {
+    _ref.listen<UserModel?>(authProvider, (previous, next) {
+      // Önceki durum null'dı ve yeni durum null değilse (Giriş yapıldıysa)
+      if (previous == null && next != null) {
+        fetchNotes();
+      }
+      // Önceki durum null değildi ve yeni durum null ise (Çıkış yapıldıysa)
+      else if (previous != null && next == null) {
+        state = const AsyncValue.data([]); // Notları temizle
+      }
+    });
+
+    final initialUser = _ref.read(authProvider);
+    if (initialUser != null) {
       fetchNotes();
-    } else {
-      state = const AsyncValue.data([]);
     }
   }
 
   Future<void> fetchNotes() async {
-    if (state.isLoading || _currentUser == null) return;
+    if (_ref.read(authProvider) == null) return;
 
     state = const AsyncValue.loading();
 
@@ -39,7 +48,15 @@ class NoteNotifier extends StateNotifier<AsyncValue<List<NoteModel>>> {
 
       state = AsyncValue.data(notes);
     } on DioException catch (e) {
-      final errorMsg = e.response?.data['message'] ?? 'Notları yükleyemedik.';
+      final dynamic errorData = e.response?.data;
+
+      final errorMsg =
+          errorData != null &&
+              errorData is Map &&
+              errorData.containsKey('message')
+          ? errorData['message']
+          : 'Notları yükleyemedik (Hata Kodu: ${e.response?.statusCode ?? 'Bilinmiyor'}).';
+
       state = AsyncValue.error(errorMsg, StackTrace.current);
     }
   }

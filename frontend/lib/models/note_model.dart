@@ -14,11 +14,13 @@ class NoteModel {
   });
 
   factory NoteModel.fromJson(Map<String, dynamic> json) {
+    final isCompletedValue = json['is_completed'];
+
     return NoteModel(
       id: json['id'] as int,
       title: json['title'] as String,
       content: json['content'] as String,
-      isCompleted: json['is_completed'] as bool,
+      isCompleted: isCompletedValue is bool ? isCompletedValue : false,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
