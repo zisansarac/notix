@@ -29,7 +29,6 @@ class NotesScreen extends ConsumerWidget {
               final currentTheme = ref.read(themeProvider);
               final notifier = ref.read(themeProvider.notifier);
 
-              // Basit bir toggle mantığı: light -> dark -> system
               if (currentTheme == ThemeMode.light) {
                 notifier.setDark();
               } else if (currentTheme == ThemeMode.dark) {

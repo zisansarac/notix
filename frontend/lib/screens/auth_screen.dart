@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import 'package:lottie/lottie.dart';
+import 'dart:ui';
 
 final isLoginProvider = StateProvider<bool>((ref) => true);
 
@@ -12,51 +14,67 @@ class AuthScreen extends ConsumerWidget {
     final isLogin = ref.watch(isLoginProvider);
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Theme.of(context).primaryColor.withOpacity(0.8),
-              Theme.of(context).primaryColor,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/auth_background.jpg', //
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
 
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(30.0),
-            child: Card(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              elevation: 10,
-              shape: RoundedRectangleBorder(
+          Positioned.fill(
+            child: Container(color: Colors.black45.withValues(alpha: 0.4)),
+          ),
+
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(30.0),
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(15),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Uygulama logosu/başlığı
-                    Text(
-                      isLogin ? 'Hoş Geldiniz!' : 'Yeni Hesap Oluştur',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: Card(
+                    color: Theme.of(context).cardColor.withValues(alpha: 0.6),
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    elevation: 0, // Card gölgesini kaldırdık
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      side: BorderSide(
+                        color: Colors.white.withValues(
+                          alpha: 0.2,
+                        ), // Hafif beyaz çerçeve
+                        width: 1,
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    isLogin
-                        ? const AuthForm(isLogin: true)
-                        : const AuthForm(isLogin: false),
-                  ],
+
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            isLogin ? 'Hoş Geldiniz!' : 'Yeni Hesap Oluştur',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          isLogin
+                              ? const AuthForm(isLogin: true)
+                              : const AuthForm(isLogin: false),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
